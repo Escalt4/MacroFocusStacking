@@ -1,0 +1,31 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.MacroFocusStacking" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:colorBackground">#000000</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
+        <item name="android:textColor">#A3A3A3</item>
+        <item name="colorPrimary">#ffffff</item>
+        <item name="colorPrimaryContainer">#ffffff</item>
+        <item name="colorOnSecondaryContainer">#ffffff</item>
+        <item name="colorOnSurface">#ffffff</item>
+        <item name="colorOnPrimary">#ffffff</item>
+        <item name="colorOnPrimaryContainer">#ffffff</item>
+        <item name="colorOnSecondary">#ffffff</item>
+        <item name="colorSecondaryContainer">#ffffff</item>
+        <item name="colorTertiary">#ffffff</item>
+        <item name="colorOnTertiary">#ffffff</item>
+        <item name="colorTertiaryContainer">#ffffff</item>
+        <item name="colorOnTertiaryContainer">#ffffff</item>
+        <item name="colorError">#ffffff</item>
+        <item name="colorErrorContainer">#ffffff</item>
+        <item name="colorOnError">#ffffff</item>
+        <item name="colorOnErrorContainer">#ffffff</item>
+        <item name="colorSurface">#ffffff</item>
+        <item name="colorSurfaceVariant">#ffffff</item>
+        <item name="colorOutline">#ffffff</item>
+        <item name="colorOnSurfaceInverse">#ffffff</item>
+        <item name="colorSurfaceInverse">#ffffff</item>
+        <item name="colorPrimaryInverse">#ffffff</item>
+    </style>
+</resources>
