@@ -15,25 +15,45 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textViewInfo"
+        android:id="@+id/textViewInfoFormat"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="5dp"
-        android:text="Снимков: 50   Формат: Raw+Jpg\niso: 800   exp: 0.015\nФокус с 13 до 20"
-        android:visibility="visible"
+        android:paddingHorizontal="15dp"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textureView" />
 
+    <TextView
+        android:id="@+id/textViewInfoExp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="15dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewInfoFormat" />
+
+    <TextView
+        android:id="@+id/textViewInfoFocus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="15dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewInfoExp" />
+
+    <!--кнопка затвора и настроек-->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayoutSectorView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewInfo">
+        app:layout_constraintTop_toBottomOf="@+id/textViewInfoFocus">
 
         <FrameLayout
             android:layout_width="wrap_content"
@@ -88,120 +108,117 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
+    <!--    настройки-->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayoutSettings"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textureView">
 
+<!--        Ближняя точка фокусировки-->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraintLayoutFocusSettings"
+            android:id="@+id/constraintLayoutNearFocusSettings"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:visibility="visible"
-            app:layout_constraintBottom_toTopOf="@+id/buttonFocusSettings"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/buttonSettingsBack"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/constraintLayoutMaxFocus"
+            <TextView
+                android:id="@+id/textViewNearFocus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:layout_constraintBottom_toTopOf="@+id/constraintLayoutMinFocus"
+                android:layout_marginHorizontal="15dp"
+                android:layout_marginBottom="15dp"
+                android:text="Ближняя точка фокусировки"
+                android:gravity="center_horizontal"
+                android:textSize="14dp"
+                app:layout_constraintBottom_toTopOf="@+id/seekBarNearFocus"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:id="@+id/textViewMaxFocus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:text="Максимальная дистанция фокусировки"
-                    android:textSize="14dp"
-                    app:layout_constraintBottom_toTopOf="@+id/seekBarMaxFocus"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <SeekBar
-                    android:id="@+id/seekBarMaxFocus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:max="1000"
-                    android:min="0"
-                    android:progress="500"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textViewMaxFocus" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/constraintLayoutMinFocus"
+            <SeekBar
+                android:id="@+id/seekBarNearFocus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="15dp"
+                android:max="999"
+                android:min="0"
+                android:progress="500"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/constraintLayoutMaxFocus">
-
-                <TextView
-
-                    android:id="@+id/textViewMinFocus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:text="Минимальная дистанция фокусировки"
-                    android:textSize="14dp"
-                    app:layout_constraintBottom_toTopOf="@+id/seekBarMinFocus"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <SeekBar
-                    android:id="@+id/seekBarMinFocus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:max="1000"
-                    android:min="0"
-                    android:progress="500"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textViewMinFocus" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                app:layout_constraintTop_toBottomOf="@+id/textViewNearFocus" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+<!--        Дальняя точка фокусировки-->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayoutFarFocusSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/buttonSettingsBack"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/textViewFarFocus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="15dp"
+                android:layout_marginBottom="15dp"
+                android:gravity="center_horizontal"
+                android:text="Дальняя точка фокусировки"
+                android:textSize="14dp"
+                app:layout_constraintBottom_toTopOf="@+id/seekBarFarFocus"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <SeekBar
+                android:id="@+id/seekBarFarFocus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="15dp"
+                android:max="999"
+                android:min="0"
+                android:progress="500"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textViewFarFocus" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+<!--        экспозиция-->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraintLayoutExpSettings"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/buttonFocusSettings"
+            app:layout_constraintBottom_toTopOf="@+id/buttonSettingsBack"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+<!--        формат и количество фото-->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraintLayoutImageSettings"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/buttonFocusSettings"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@+id/buttonSettingsBack"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -219,8 +236,10 @@
                     android:id="@+id/textViewImageCount"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:text="Количество кадров "
+                    android:layout_marginHorizontal="15dp"
+                    android:layout_marginBottom="15dp"
+                    android:gravity="center_horizontal"
+                    android:text="Количество кадров 50"
                     android:textSize="14dp"
                     app:layout_constraintBottom_toTopOf="@+id/seekBarImageCount"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -231,10 +250,10 @@
                     android:id="@+id/seekBarImageCount"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:max="1000"
-                    android:min="0"
-                    android:progress="500"
+                    android:layout_marginHorizontal="15dp"
+                    android:max="250"
+                    android:min="2"
+                    android:progress="50"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -255,7 +274,9 @@
                     android:id="@+id/textViewImageFormat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
+                    android:layout_marginHorizontal="15dp"
+                    android:layout_marginBottom="15dp"
+                    android:gravity="center_horizontal"
                     android:text="Формат изображений"
                     android:textSize="14dp"
                     app:layout_constraintBottom_toTopOf="@+id/radioGroupImageFormat"
@@ -321,11 +342,11 @@
             app:icon="@drawable/icon_arrow_back"
             app:iconGravity="textEnd"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/buttonFocusSettings"
+            app:layout_constraintEnd_toStartOf="@+id/buttonNearFocusSettings"
             app:layout_constraintStart_toStartOf="parent" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/buttonFocusSettings"
+            android:id="@+id/buttonNearFocusSettings"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -333,15 +354,32 @@
             android:layout_marginBottom="5dp"
             android:insetTop="0dp"
             android:insetBottom="0dp"
-            android:maxLines="1"
             android:padding="0dp"
-            android:text="Фокус"
+            android:text="Ближний\nфокус"
+            android:textColor="@color/white"
+            android:textSize="14dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonFarFocusSettings"
+            app:layout_constraintStart_toEndOf="@+id/buttonSettingsBack"
+            app:strokeColor="@color/white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonFarFocusSettings"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginBottom="5dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            android:text="Дальний\nфокус"
             android:textColor="@color/white"
             android:textSize="14dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/buttonExpSettings"
-            app:layout_constraintStart_toEndOf="@+id/buttonSettingsBack"
-            app:strokeColor="@color/white" />
+            app:layout_constraintStart_toEndOf="@+id/buttonNearFocusSettings"
+            app:strokeColor="@color/black" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonExpSettings"
@@ -359,7 +397,7 @@
             android:textSize="14dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/buttonImageSettings"
-            app:layout_constraintStart_toEndOf="@+id/buttonFocusSettings"
+            app:layout_constraintStart_toEndOf="@+id/buttonFarFocusSettings"
             app:strokeColor="@color/black" />
 
 

@@ -1,10 +1,5 @@
 package ru.example.macrofocusstacking;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -18,7 +13,6 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.DngCreator;
 import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
@@ -32,13 +26,17 @@ import android.util.Pair;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
-import java.io.ByteArrayInputStream;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,17 +44,13 @@ import java.util.List;
 
 import ru.example.macrofocusstacking.databinding.ActivityMainBinding;
 
-
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
-    private MainActivity mainActivity;
 
-    private SurfaceTexture surfaceTexture;
     private Surface previewSurface;
     private boolean surfaceTextureAvailable = false;
     private List<Surface> surfaceList = new ArrayList<>();
 
-    private CameraManager cameraManager;
     private CameraDevice cameraDevice;
     private CameraCaptureSession cameraCaptureSession;
     private CaptureRequest.Builder previewRequestBuilder;
@@ -73,11 +67,12 @@ public class MainActivity extends AppCompatActivity {
     private int currentRawImgNumber = 0;
     private int currentImgNumber = 0;
 
-    private float focusValue = 25.0f;
-    private float minFocusValue = 10.0f;
-    private float maxFocusValue = 25.0f;
+    private float nearFocusValue = 25.0f;
+    private float farFocusValue = 10.0f;
+    private final float[] focusValueRange = {10.0f, 25.0f};
     private int frameCount = 50;
-    private float focusValueStep = (maxFocusValue - minFocusValue) / (frameCount - 1);
+
+    private int curTab = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,8 +81,6 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         super.onCreate(savedInstanceState);
         setContentView(binding.getRoot());
-
-        mainActivity = this;
 
         checkAndRequestPermissions();
     }
@@ -122,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == 0) {
@@ -138,73 +131,6 @@ public class MainActivity extends AppCompatActivity {
         imageReaderRawSensor = ImageReader.newInstance(2592, 1944, ImageFormat.RAW_SENSOR, 50);
         imageReaderRawSensor.setOnImageAvailableListener(new ImageAvailableListener(this, ImageFormat.RAW_SENSOR), null);
 
-//        surfaceList = Arrays.asList(previewSurface, imageReaderJpeg.getSurface(), imageReaderRawSensor.getSurface());
-        surfaceList = Arrays.asList(previewSurface, imageReaderJpeg.getSurface());
-//
-//        takePhotoButton = findViewById(R.id.takePhotoButton);
-//        takePhotoButton.setOnClickListener(view -> {
-//            takePhotoButton.setEnabled(false);
-//            settingsButton.setEnabled(false);
-//            try {
-//                cameraCaptureSession.stopRepeating();
-//                takePhoto();
-//            } catch (CameraAccessException e) {
-//                e.printStackTrace();
-//            }
-//        });
-
-//        settingsButton = findViewById(R.id.settingsSave);
-//        settingsButton.setOnClickListener(view -> {
-//            findViewById(R.id.linearLayout).setVisibility(View.GONE);
-//            findViewById(R.id.scrollView).setVisibility(View.VISIBLE);
-//        });
-
-//        sectorView = findViewById(R.id.sectorView);
-//        progressBar = findViewById(R.id.progressBar);
-
-//        EditText editTextFrameCount = findViewById(R.id.editTextFrameCount);
-//        editTextFrameCount.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-//            }
-//
-//            @Override
-//            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-//            }
-//
-//            @Override
-//            public void afterTextChanged(Editable editable) {
-//                String frameCountText = editTextFrameCount.getText().toString();
-//                if (!TextUtils.isEmpty(frameCountText)) {
-//                    int newFrameCount = -1;
-//                    try {
-//                        newFrameCount = Integer.parseInt(frameCountText);
-//                        if (newFrameCount >= 2 && newFrameCount <= 300) {
-//                            editTextFrameCount.setBackgroundColor(Color.TRANSPARENT);
-//                            frameCount = newFrameCount;
-//                            focusValueStep = (maxFocusValue - minFocusValue) / (frameCount - 1);
-//
-//                            SharedPreferences.Editor editor = getSharedPreferences("MacroFocusStacking", MODE_PRIVATE).edit();
-//                            editor.putInt("frameCount", frameCount);
-//                            editor.apply();
-//                        } else {
-//                            editTextFrameCount.setBackgroundColor(Color.RED);
-//                        }
-//                    } catch (NumberFormatException e) {
-//                        editTextFrameCount.setBackgroundColor(Color.RED);
-//                    }
-//                } else {
-//                    editTextFrameCount.setBackgroundColor(Color.RED);
-//                }
-//            }
-//        });
-
-
-//        SharedPreferences sharedPreferences = getSharedPreferences("MacroFocusStacking", MODE_PRIVATE);
-//        frameCount = sharedPreferences.getInt("frameCount", 50);
-//        focusValueStep = (maxFocusValue - minFocusValue) / (frameCount - 1);
-//        editTextFrameCount.setText(String.valueOf(frameCount));
-
 //        RadioGroup radioGroup = findViewById(R.id.radioGroup);
 //        String imagesFormat = sharedPreferences.getString("imagesFormat", "RawJpg");
 //        switch (imagesFormat) {
@@ -212,17 +138,48 @@ public class MainActivity extends AppCompatActivity {
 //                radioGroup.check(R.id.radioButtonJpg);
 //                surfaceList = Arrays.asList(previewSurface, imageReaderJpeg.getSurface());
 //                break;
-
+//
 //            case "Raw":
 //                radioGroup.check(R.id.radioButtonRaw);
 //                surfaceList = Arrays.asList(previewSurface, imageReaderRawSensor.getSurface());
 //                break;
-
+//
 //            case "RawJpg":
 //                radioGroup.check(R.id.radioButtonRawJpg);
 //                surfaceList = Arrays.asList(previewSurface, imageReaderJpeg.getSurface(), imageReaderRawSensor.getSurface());
 //                break;
 //        }
+
+//        SharedPreferences sharedPreferences = getSharedPreferences("MacroFocusStacking", MODE_PRIVATE);
+//        frameCount = sharedPreferences.getInt("frameCount", 50);
+//        focusValueStep = (maxFocusValue - minFocusValue) / (frameCount - 1);
+//        editTextFrameCount.setText(String.valueOf(frameCount));radioButtonJpg
+
+        surfaceList = Arrays.asList(previewSurface, imageReaderJpeg.getSurface());
+        binding.textViewInfoFormat.setText("Снимков: " + frameCount + " Формат: Jpg");
+
+        binding.radioButtonJpg.setOnClickListener(view -> {
+            surfaceList = Arrays.asList(previewSurface, imageReaderJpeg.getSurface());
+            createPreviewSession();
+            binding.textViewInfoFormat.setText("Снимков: " + frameCount + " Формат: Jpg");
+        });
+        binding.radioButtonRaw.setOnClickListener(view -> {
+            surfaceList = Arrays.asList(previewSurface, imageReaderRawSensor.getSurface());
+            createPreviewSession();
+            binding.textViewInfoFormat.setText("Снимков: " + frameCount + " Формат: Raw");
+        });
+        binding.radioButtonRawJpg.setOnClickListener(view -> {
+            surfaceList = Arrays.asList(previewSurface, imageReaderJpeg.getSurface(), imageReaderRawSensor.getSurface());
+            createPreviewSession();
+            binding.textViewInfoFormat.setText("Снимков: " + frameCount + " Формат: Raw+Jpg");
+        });
+//        binding.radioGroupImageFormat.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+//
+//            }
+//        });
+
 
         binding.buttonTakePhoto.setOnClickListener(view -> {
             binding.buttonSettings.setEnabled(false);
@@ -231,52 +188,119 @@ public class MainActivity extends AppCompatActivity {
         });
 
         binding.buttonSettings.setOnClickListener(view -> {
-            binding.textViewInfo.setVisibility(View.GONE);
+            binding.textViewInfoExp.setVisibility(View.GONE);
+            binding.textViewInfoFocus.setVisibility(View.GONE);
+            binding.textViewInfoFormat.setVisibility(View.GONE);
             binding.constraintLayoutSectorView.setVisibility(View.GONE);
             binding.constraintLayoutSettings.setVisibility(View.VISIBLE);
+
+            changeTab(curTab);
         });
 
         binding.buttonSettingsBack.setOnClickListener(view -> {
-            binding.textViewInfo.setVisibility(View.VISIBLE);
+            startPreview(nearFocusValue);
+
+            binding.textViewInfoFormat.setVisibility(View.VISIBLE);
+            binding.textViewInfoFocus.setVisibility(View.VISIBLE);
+            binding.textViewInfoExp.setVisibility(View.VISIBLE);
             binding.constraintLayoutSectorView.setVisibility(View.VISIBLE);
             binding.constraintLayoutSettings.setVisibility(View.GONE);
         });
 
-        binding.buttonFocusSettings.setOnClickListener(view -> {
-            binding.buttonFocusSettings.setStrokeColor(ColorStateList.valueOf(Color.WHITE));
-            binding.buttonExpSettings.setStrokeColor(ColorStateList.valueOf(Color.BLACK));
-            binding.buttonImageSettings.setStrokeColor(ColorStateList.valueOf(Color.BLACK));
 
-            binding.constraintLayoutFocusSettings.setVisibility(View.VISIBLE);
-            binding.constraintLayoutExpSettings.setVisibility(View.GONE);
-            binding.constraintLayoutImageSettings.setVisibility(View.GONE);
+        binding.buttonNearFocusSettings.setOnClickListener(view -> {
+            curTab = 0;
+            changeTab(curTab);
+        });
+
+        binding.seekBarNearFocus.setProgress(999 - (int) ((nearFocusValue - focusValueRange[0]) / (focusValueRange[1] - focusValueRange[0]) * 999.0));
+        binding.textViewNearFocus.setText("Ближняя точка фокусировки " + String.format("%1$,.2f", nearFocusValue));
+        binding.textViewInfoFocus.setText("Фокусировка с " + String.format("%1$,.2f", nearFocusValue) + " до " + String.format("%1$,.2f", farFocusValue));
+        binding.seekBarNearFocus.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                nearFocusValue = (float) (focusValueRange[0] + (999 - seekBar.getProgress()) / 999.0 * (focusValueRange[1] - focusValueRange[0]));
+                binding.textViewNearFocus.setText("Ближняя точка фокусировки " + String.format("%1$,.2f", nearFocusValue));
+                binding.textViewInfoFocus.setText("Фокусировка с " + String.format("%1$,.2f", nearFocusValue) + " до " + String.format("%1$,.2f", farFocusValue));
+                startPreview(nearFocusValue);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        binding.buttonFarFocusSettings.setOnClickListener(view -> {
+            curTab = 1;
+            changeTab(curTab);
+        });
+
+        binding.seekBarFarFocus.setProgress(999 - (int) ((farFocusValue - focusValueRange[0]) / (focusValueRange[1] - focusValueRange[0]) * 999.0));
+        binding.textViewFarFocus.setText("Дальняя точка фокусировки " + String.format("%1$,.2f", farFocusValue));
+        binding.seekBarFarFocus.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                farFocusValue = (float) (focusValueRange[0] + (999 - seekBar.getProgress()) / 999.0 * (focusValueRange[1] - focusValueRange[0]));
+                binding.textViewFarFocus.setText("Дальняя точка фокусировки " + String.format("%1$,.2f", farFocusValue));
+                binding.textViewInfoFocus.setText("Фокусировка с " + String.format("%1$,.2f", nearFocusValue) + " до " + String.format("%1$,.2f", farFocusValue));
+                startPreview(farFocusValue);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
         });
 
         binding.buttonExpSettings.setOnClickListener(view -> {
-            binding.buttonFocusSettings.setStrokeColor(ColorStateList.valueOf(Color.BLACK));
-            binding.buttonExpSettings.setStrokeColor(ColorStateList.valueOf(Color.WHITE));
-            binding.buttonImageSettings.setStrokeColor(ColorStateList.valueOf(Color.BLACK));
-
-            binding.constraintLayoutFocusSettings.setVisibility(View.GONE);
-            binding.constraintLayoutExpSettings.setVisibility(View.VISIBLE);
-            binding.constraintLayoutImageSettings.setVisibility(View.GONE);
+            curTab = 2;
+            changeTab(curTab);
         });
 
         binding.buttonImageSettings.setOnClickListener(view -> {
-            binding.buttonFocusSettings.setStrokeColor(ColorStateList.valueOf(Color.BLACK));
-            binding.buttonExpSettings.setStrokeColor(ColorStateList.valueOf(Color.BLACK));
-            binding.buttonImageSettings.setStrokeColor(ColorStateList.valueOf(Color.WHITE));
-
-            binding.constraintLayoutFocusSettings.setVisibility(View.GONE);
-            binding.constraintLayoutExpSettings.setVisibility(View.GONE);
-            binding.constraintLayoutImageSettings.setVisibility(View.VISIBLE);
+            curTab = 3;
+            changeTab(curTab);
         });
 
-        binding.textureView.setSurfaceTextureListener(new TextureViewSurfaceTextureListener(this));
+        binding.textureView.setSurfaceTextureListener(new TextureViewSurfaceTextureListener());
+    }
+
+    private void changeTab(int tabNum) {
+        switch (tabNum) {
+            case 0:
+            case 2:
+            case 3:
+                startPreview(nearFocusValue);
+                break;
+            case 1:
+                startPreview(farFocusValue);
+                break;
+        }
+
+        binding.buttonNearFocusSettings.setStrokeColor(tabNum == 0 ? ColorStateList.valueOf(Color.WHITE) : ColorStateList.valueOf(Color.BLACK));
+        binding.buttonFarFocusSettings.setStrokeColor(tabNum == 1 ? ColorStateList.valueOf(Color.WHITE) : ColorStateList.valueOf(Color.BLACK));
+        binding.buttonExpSettings.setStrokeColor(tabNum == 2 ? ColorStateList.valueOf(Color.WHITE) : ColorStateList.valueOf(Color.BLACK));
+        binding.buttonImageSettings.setStrokeColor(tabNum == 3 ? ColorStateList.valueOf(Color.WHITE) : ColorStateList.valueOf(Color.BLACK));
+
+        binding.constraintLayoutNearFocusSettings.setVisibility(tabNum == 0 ? View.VISIBLE : View.GONE);
+        binding.constraintLayoutFarFocusSettings.setVisibility(tabNum == 1 ? View.VISIBLE : View.GONE);
+        binding.constraintLayoutExpSettings.setVisibility(tabNum == 2 ? View.VISIBLE : View.GONE);
+        binding.constraintLayoutImageSettings.setVisibility(tabNum == 3 ? View.VISIBLE : View.GONE);
     }
 
     private class ImageAvailableListener implements ImageReader.OnImageAvailableListener {
-        private MainActivity mainActivity;
+        private final MainActivity mainActivity;
         private final int imageFormatType;
 
         public ImageAvailableListener(MainActivity mainActivity, int imageFormatType) {
@@ -286,16 +310,16 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onImageAvailable(ImageReader reader) {
-            mainActivity.currentImgNumber += 1;
+            currentImgNumber += 1;
 
-            if (mainActivity.currentImgNumber == mainActivity.frameCount * (mainActivity.surfaceList.size() - 1)) {
-                mainActivity.currentImgNumber = 0;
+            if (currentImgNumber == frameCount * (surfaceList.size() - 1)) {
+                currentImgNumber = 0;
                 binding.sectorView.setSector(0.0f);
                 binding.sectorView.invisibleSector();
                 binding.progressBar.setVisibility(View.VISIBLE);
-                mainActivity.startPreview();
+                startPreview(nearFocusValue);
             } else {
-                float sectorValue = 360.0f * mainActivity.currentImgNumber / (mainActivity.frameCount * (mainActivity.surfaceList.size() - 1));
+                float sectorValue = 360.0f * currentImgNumber / (frameCount * (surfaceList.size() - 1));
                 binding.sectorView.setSector(sectorValue);
             }
 
@@ -308,28 +332,28 @@ public class MainActivity extends AppCompatActivity {
                         buffer.get(bytesBuffer);
                         image.close();
 
-                        mainActivity.currentJpgImgNumber += 1;
-                        mainActivity.jpgImages.add(new Pair<>(bytesBuffer, mainActivity.currentJpgImgNumber));
+                        currentJpgImgNumber += 1;
+                        jpgImages.add(new Pair<>(bytesBuffer, currentJpgImgNumber));
 
-                        if (mainActivity.currentJpgImgNumber == mainActivity.frameCount) {
-                            mainActivity.currentJpgImgNumber = 0;
-                            saveImages(mainActivity.jpgImages, "jpg", mainActivity);
-                            mainActivity.jpgImages.clear();
+                        if (currentJpgImgNumber == frameCount) {
+                            currentJpgImgNumber = 0;
+                            saveImages(jpgImages, "jpg", mainActivity);
+                            jpgImages.clear();
 
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mainActivity.focusValue = mainActivity.maxFocusValue;
-                                    mainActivity.startPreview();
-                                    binding.progressBar.setVisibility(View.GONE);
-                                    binding.buttonTakePhoto.setEnabled(true);
-                                    binding.buttonSettings.setEnabled(true);
-                                }
+                            runOnUiThread(() -> {
+                                startPreview(nearFocusValue);
+                                binding.progressBar.setVisibility(View.GONE);
+                                binding.buttonTakePhoto.setEnabled(true);
+                                binding.buttonSettings.setEnabled(true);
                             });
                         }
 
 
                     });
+                    break;
+
+                case ImageFormat.RAW_SENSOR:
+                    reader.acquireNextImage().close();
                     break;
             }
         }
@@ -367,36 +391,31 @@ public class MainActivity extends AppCompatActivity {
 
 
     private class TextureViewSurfaceTextureListener implements TextureView.SurfaceTextureListener {
-        private final MainActivity mainActivity;
-
-        public TextureViewSurfaceTextureListener(MainActivity mainActivity) {
-            this.mainActivity = mainActivity;
+        public TextureViewSurfaceTextureListener() {
         }
 
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-            mainActivity.surfaceTexture = surfaceTexture;
-            mainActivity.surfaceTextureAvailable = true;
-
-            mainActivity.openCamera();
+            surfaceTextureAvailable = true;
+            openCamera();
         }
 
         @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
             return true;
         }
 
         @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+        public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
         }
 
         @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surface) {
         }
     }
 
     private void openCamera() {
-        cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
         try {
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -419,18 +438,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
             mainActivity.cameraDevice = cameraDevice;
-            mainActivity.createPreviewSession();
+            createPreviewSession();
         }
 
         @Override
-        public void onDisconnected(CameraDevice camera) {
-            camera.close();
+        public void onDisconnected(CameraDevice cameraDevice) {
+            cameraDevice.close();
             mainActivity.cameraDevice = null;
         }
 
         @Override
-        public void onError(CameraDevice camera, int error) {
-            camera.close();
+        public void onError(CameraDevice cameraDevice, int error) {
+            cameraDevice.close();
             mainActivity.cameraDevice = null;
         }
     }
@@ -440,6 +459,8 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             previewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            previewRequestBuilder.addTarget(previewSurface);
+
             if (surfaceList.size() == 0) {
                 surfaceList.add(previewSurface);
             } else {
@@ -452,16 +473,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private class CameraCaptureSessionStateCallback extends CameraCaptureSession.StateCallback {
-        private MainActivity mainActivity;
+        private final MainActivity mainActivity;
 
         public CameraCaptureSessionStateCallback(MainActivity mainActivity) {
             this.mainActivity = mainActivity;
         }
 
         @Override
-        public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+        public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
             mainActivity.cameraCaptureSession = cameraCaptureSession;
-            mainActivity.startPreview();
+            startPreview(nearFocusValue);
 //
 //            if (mainActivity.jpgImages.isEmpty() && mainActivity.rawImages.isEmpty()) {
 //                mainActivity.takePhotoButton.setEnabled(true);
@@ -471,36 +492,34 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onConfigureFailed(CameraCaptureSession session) {
+        public void onConfigureFailed(@NonNull CameraCaptureSession session) {
         }
     }
 
-    private void startPreview() {
+    private void startPreview(float focusValue) {
         if (previewRequestBuilder == null || cameraCaptureSession == null)
             return;
 
         try {
-            previewRequestBuilder.addTarget(previewSurface);
             previewRequestBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
             previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
             previewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, focusValue);
 
-            cameraCaptureSession.setRepeatingRequest(previewRequestBuilder.build(), new CameraCaptureSessionCaptureCallback(this), null);
+            cameraCaptureSession.setRepeatingRequest(previewRequestBuilder.build(), new CameraCaptureSessionCaptureCallback(), null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
 
     private class CameraCaptureSessionCaptureCallback extends CameraCaptureSession.CaptureCallback {
-        private final MainActivity mainActivity;
-
-        public CameraCaptureSessionCaptureCallback(MainActivity mainActivity) {
-            this.mainActivity = mainActivity;
+        public CameraCaptureSessionCaptureCallback() {
         }
 
         @Override
-        public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
-            mainActivity.captureResult = result;
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, TotalCaptureResult result) {
+            captureResult = result;
+
+            binding.textViewInfoExp.setText("iso: " + result.get(TotalCaptureResult.SENSOR_SENSITIVITY) + " exp: 1/" + (int) Math.round(1D / (result.get(TotalCaptureResult.SENSOR_EXPOSURE_TIME) / 1000000000.0)));
         }
     }
 
@@ -509,12 +528,12 @@ public class MainActivity extends AppCompatActivity {
         if (cameraCaptureSession == null || cameraDevice == null || previewRequestBuilder == null)
             return;
 
-        focusValue = maxFocusValue;
-        focusValueStep = (maxFocusValue - minFocusValue) / (frameCount - 1);
+        float focusValue = nearFocusValue;
+        float focusValueStep = (nearFocusValue - farFocusValue) / (frameCount - 1);
         List<CaptureRequest> captureRequests = new ArrayList<>();
         for (int i = 0; i < frameCount; i++) {
             try {
-                CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG);
+                CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 for (Surface surface : surfaceList) {
                     captureBuilder.addTarget(surface);
                 }
