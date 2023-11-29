@@ -13,6 +13,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.DngCreator;
 import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
@@ -23,6 +24,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Pair;
+import android.util.SparseArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -42,10 +44,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import ru.example.macrofocusstacking.Database.MacroFocusStackingDao;
+import ru.example.macrofocusstacking.Database.MacroFocusStackingDatabase;
+import ru.example.macrofocusstacking.Database.Model.RawImage;
 import ru.example.macrofocusstacking.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
+
+    private MacroFocusStackingDao macroFocusStackingDao;
 
     private Surface previewSurface;
     private boolean surfaceTextureAvailable = false;
@@ -62,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
 
     private List<Pair<byte[], Integer>> jpgImages = new ArrayList<>();
     private List<Pair<byte[], Integer>> rawImages = new ArrayList<>();
-    private List<Pair<Image, Integer>> rawImages2 = new ArrayList<>();
     private int currentJpgImgNumber = 0;
     private int currentRawImgNumber = 0;
     private int currentImgNumber = 0;
@@ -70,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
     private float nearFocusValue = 25.0f;
     private float farFocusValue = 10.0f;
     private final float[] focusValueRange = {10.0f, 25.0f};
-    private int frameCount = 50;
+    private int frameCount = 100;
 
     private int curTab = 0;
 
@@ -125,6 +131,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void continueLoadApp() {
+        macroFocusStackingDao = ((App) getApplicationContext()).getMacroFocusStackingDatabase().macroFocusStackingDao();
+        AsyncTask.execute(() -> macroFocusStackingDao.deleteAllRawImage());
+
         imageReaderJpeg = ImageReader.newInstance(2592, 1944, ImageFormat.JPEG, 50);
         imageReaderJpeg.setOnImageAvailableListener(new ImageAvailableListener(this, ImageFormat.JPEG), null);
 
@@ -318,52 +327,78 @@ public class MainActivity extends AppCompatActivity {
                 binding.sectorView.invisibleSector();
                 binding.progressBar.setVisibility(View.VISIBLE);
                 startPreview(nearFocusValue);
+
+                AsyncTask.execute(() -> {
+                    currentJpgImgNumber = 0;
+                    saveImages(jpgImages, mainActivity);
+                    jpgImages.clear();
+
+                    currentRawImgNumber = 0;
+                    rawImages.clear();
+                    AsyncTask.execute(() -> macroFocusStackingDao.deleteAllRawImage());
+
+                    runOnUiThread(() -> {
+                        startPreview(nearFocusValue);
+                        binding.progressBar.setVisibility(View.GONE);
+                        binding.buttonTakePhoto.setEnabled(true);
+                        binding.buttonSettings.setEnabled(true);
+                    });
+                });
+
             } else {
                 float sectorValue = 360.0f * currentImgNumber / (frameCount * (surfaceList.size() - 1));
                 binding.sectorView.setSector(sectorValue);
             }
 
+
             switch (imageFormatType) {
                 case ImageFormat.JPEG:
-                    AsyncTask.execute(() -> {
-                        Image image = reader.acquireNextImage();
-                        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                        byte[] bytesBuffer = new byte[buffer.capacity()];
-                        buffer.get(bytesBuffer);
-                        image.close();
+                    currentJpgImgNumber += 1;
 
-                        currentJpgImgNumber += 1;
-                        jpgImages.add(new Pair<>(bytesBuffer, currentJpgImgNumber));
+                    Image image = reader.acquireNextImage();
+                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                    byte[] bytesBuffer = new byte[buffer.capacity()];
+                    buffer.get(bytesBuffer);
+                    image.close();
 
-                        if (currentJpgImgNumber == frameCount) {
-                            currentJpgImgNumber = 0;
-                            saveImages(jpgImages, "jpg", mainActivity);
-                            jpgImages.clear();
+                    jpgImages.add(new Pair<>(bytesBuffer, currentJpgImgNumber));
 
-                            runOnUiThread(() -> {
-                                startPreview(nearFocusValue);
-                                binding.progressBar.setVisibility(View.GONE);
-                                binding.buttonTakePhoto.setEnabled(true);
-                                binding.buttonSettings.setEnabled(true);
-                            });
-                        }
-
-
-                    });
                     break;
 
                 case ImageFormat.RAW_SENSOR:
-                    reader.acquireNextImage().close();
+                    currentRawImgNumber += 1;
+//
+//                    Image imageRaw = reader.acquireNextImage();
+//                    ByteBuffer bufferRaw = imageRaw.getPlanes()[0].getBuffer();
+//                    byte[] bytesBufferRaw = new byte[bufferRaw.capacity()];
+//                    bufferRaw.get(bytesBufferRaw);
+//                    imageRaw.close();
+//                    rawImages.add(new Pair<>(bytesBufferRaw, currentRawImgNumber));
+
+                    AsyncTask.execute(() -> {
+                        Image imageRaw = reader.acquireNextImage();
+                        ByteBuffer bufferRaw = imageRaw.getPlanes()[0].getBuffer();
+                        byte[] bytesBufferRaw = new byte[bufferRaw.capacity()];
+                        bufferRaw.get(bytesBufferRaw);
+                        imageRaw.close();
+
+                        macroFocusStackingDao.insertRawImage(new RawImage(macroFocusStackingDao.getNextRawImageId(), "" + currentRawImgNumber, bytesBufferRaw));
+
+//                            rawImages.add(new Pair<>(bytesBufferRaw, currentRawImgNumber));
+
+
+                    });
+
                     break;
             }
         }
 
-        public void saveImages(List<Pair<byte[], Integer>> images, String ext, AppCompatActivity activity) {
+        public void saveImages(List<Pair<byte[], Integer>> images, AppCompatActivity activity) {
             String timeStamp = String.valueOf(System.currentTimeMillis());
 
             File picturesDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
             File appDirectory = new File(picturesDirectory, "MacroFocusStacking");
-            File subDirectory = new File(appDirectory, timeStamp + "_" + ext);
+            File subDirectory = new File(appDirectory, timeStamp + "_jpg");
             if (!subDirectory.exists()) {
                 subDirectory.mkdirs();
             }
@@ -372,12 +407,12 @@ public class MainActivity extends AppCompatActivity {
                 appDirectory.mkdirs();
             }
 
-            for (Pair<byte[], Integer> img : images) {
+            for (Pair<byte[], Integer> image : images) {
                 try {
-                    File file = new File(subDirectory, "Macro_" + String.format("%03d", img.second) + "_" + timeStamp + "." + ext);
+                    File file = new File(subDirectory, "Macro_" + String.format("%03d", image.second) + "_" + timeStamp + ".jpg");
 
                     FileOutputStream output = new FileOutputStream(file);
-                    output.write(img.first);
+                    output.write(image.first);
                     output.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -387,6 +422,42 @@ public class MainActivity extends AppCompatActivity {
             MediaScannerConnection.scanFile(activity, new String[]{appDirectory.getAbsolutePath()}, null, null);
             MediaScannerConnection.scanFile(activity, new String[]{subDirectory.getAbsolutePath()}, null, null);
         }
+
+//        public  void saveRawImages(List<Pair<Image, Integer>> images, AppCompatActivity activity) {
+//            String timeStamp = String.valueOf(System.currentTimeMillis());
+//
+//            File picturesDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+//            File appDirectory = new File(picturesDirectory, "MacroFocusStacking");
+//            File subDirectory = new File(appDirectory, timeStamp + "_dng");
+//            if (!subDirectory.exists()) {
+//                subDirectory.mkdirs();
+//            }
+//
+//            if (!appDirectory.exists()) {
+//                appDirectory.mkdirs();
+//            }
+//
+//            Size imageResolution = new Size(2592, 1944);
+//            // Assuming you have a DngCreator instance initialized elsewhere
+//            DngCreator dngCreator = new DngCreator(/*pass necessary parameters*/);
+//
+//            for (Pair<Image, Integer> img : images) {
+//                try {
+//                    File file = new File(subDirectory, "Macro_" + String.format("%03d", img.second) + "_" + timeStamp + ".dng");
+//
+//                    FileOutputStream output = new FileOutputStream(file);
+//                    dngCreator.writeImage(output, img.first);
+//                    output.close();
+//
+//                    img.first.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            MediaScannerConnection.scanFile(activity, new String[]{appDirectory.getAbsolutePath()}, null, null);
+//            MediaScannerConnection.scanFile(activity, new String[]{subDirectory.getAbsolutePath()}, null, null);
+//        }
     }
 
 
@@ -497,8 +568,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startPreview(float focusValue) {
-        if (previewRequestBuilder == null || cameraCaptureSession == null)
-            return;
+        if (previewRequestBuilder == null || cameraCaptureSession == null) return;
 
         try {
             previewRequestBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
